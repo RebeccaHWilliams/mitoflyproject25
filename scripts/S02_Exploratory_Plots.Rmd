@@ -1,0 +1,101 @@
+---
+title: "S02_exploratoryplots"
+author: "RebeccaW"
+date: "2025-08-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+## Load data
+
+```{r}
+#load here: 
+surv_data <- readxl::read_excel(
+  path = "../data/CTmax.xlsx",
+  sheet = "raw_data"
+)
+
+str(surv_data)
+
+surv_data$time <- as.numeric(surv_data$time)
+
+
+```
+
+## Plot overall pattern
+
+```{r}
+ggplot(
+  data = surv_data, 
+  mapping = aes(
+    x = ex_T, 
+    y = time, 
+    colour = genotype
+  )
+) +
+  geom_point(
+    mapping = aes(
+      shape = sex
+    ), 
+    position = position_jitter(),
+    size = 3
+  ) +
+  facet_grid(
+    rows = vars(dev_T)
+  ) +
+  theme_light()
+```
+
+## Grouping together
+
+```{r}
+group_means <- surv_data %>%
+  group_by(sex, dev_T,ex_T, genotype) %>%
+  reframe(
+    surv_mean = mean(time, na.rm = TRUE), 
+    surv_sd = sd(time)
+  )
+
+```
+
+```{r}
+ggplot(
+  data = group_means, 
+  mapping = aes(
+    x = ex_T, 
+    y = surv_mean, 
+    colour = genotype
+  )
+) +
+  geom_point(
+    size = 3, 
+   # position = position_jitter()
+  ) +
+  facet_grid(
+    rows = vars(sex), 
+    cols = vars(dev_T)
+  ) +
+ geom_smooth(
+  method = "lm", 
+  se = FALSE
+  
+   ) +
+  scale_colour_manual(
+    values = c(
+      "mM" = "deepskyblue2", 
+      "mT" = "yellow", 
+      "tM" = "forestgreen", 
+      "tT" = "firebrick"
+    )
+  ) +
+  theme_minimal()
+```
